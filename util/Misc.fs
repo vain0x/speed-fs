@@ -100,3 +100,63 @@ module Reflection =
         match caseOpt with
         | Some case -> FSharpValue.MakeUnion (case, [||])
         | None -> failwith ("unknown case of " + typeof<'T>.Name)
+
+type UpdateMonad<'TState, 'TUpdate, 'T> =
+  | UM of ('TState -> 'TUpdate * 'T)
+
+module UpdateMonad =
+  open System.Collections.Generic
+
+  let inline unit< ^S when ^S: (static member Unit: ^S)> (): ^S =
+    (^S : (static member Unit: ^S) ()) 
+
+  let inline combine< ^S when ^S: (static member Combine: ^S * ^S -> ^S )> a b: ^S =
+    (^S : (static member Combine: ^S * ^S -> ^S) (a, b)) 
+
+  let inline apply< ^S, ^U when ^U : (static member Apply: ^S * ^U -> ^S )> s a: ^S =
+    (^U : (static member Apply: ^S * ^U -> ^S) (s, a)) 
+
+  type UpdateBuilder() = 
+    member inline this.Return(v): UpdateMonad<'S, 'U, 'T> = 
+      UM (fun s -> (unit (), v))
+
+    member inline x.ReturnFrom(m: UpdateMonad<'S, 'P, 'T>) = m
+
+    member inline this.Bind(UM u1, f: 'T -> UpdateMonad<'S, 'U, 'R>) =  
+      UM (fun s -> 
+        let (u1, x) = u1 s
+        let (UM u2) = f x
+        let (u2, y) = u2 (apply s u1)
+        (combine u1 u2, y))
+        
+    member inline this.Zero() = this.Return(())
+
+    member inline this.Delay(f) = this.Bind(this.Zero(), f)
+
+    member inline this.Combine(c1, c2) = this.Bind(c1, fun () -> c2)
+
+    member inline this.Using(r, f) =
+      let body s =
+        use rr = r
+        let (UM g) = f rr
+        in g s
+      in (UM body)
+
+    member inline this.For(sq: seq<'V>, f: 'V -> UpdateMonad<'S, 'P, unit>) = 
+      let rec loop (en: IEnumerator<_>) = 
+        if en.MoveNext()
+        then this.Bind(f en.Current, fun _ -> loop en)
+        else this.Zero()
+      in
+        this.Using(sq.GetEnumerator(), loop)
+
+    member inline this.While(t, f: unit -> UpdateMonad<'S, 'P, unit>) =
+      let rec loop () = 
+        if t ()
+        then this.Bind(f(), loop)
+        else this.Zero()
+      in loop ()
+
+[<AutoOpen>]
+module UpdateMonadSyntax =
+  let update = UpdateMonad.UpdateBuilder()
