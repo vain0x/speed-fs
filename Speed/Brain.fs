@@ -6,11 +6,10 @@ open Speed.Core
 module Brain =
   let tryFindPuttableCard plId (g: GameState) =
     let pl = g.PlayerStore |> Map.find plId
-    let players = g.PlayerStore |> Map.toList |> List.map fst
     in
       pl.Hand
       |> List.tryPick (fun handCard ->
-          players
+          (g |> GameState.players)
           |> List.tryPick (fun dest ->
               let canPut =
                 match g.Board |> Map.tryFind dest with
