@@ -32,12 +32,16 @@ module Brain =
           do
             Console.lock (fun ()-> 
               do
+                Console.ForegroundColor <- ConsoleColor.Green
+              ;
                 printfn "(Which card do you put and where?)"
               ;
                 you.Hand
                 |> List.iteri (fun i card ->
                     printfn "#%d %A" i card
                     )
+              ;
+                Console.ResetColor()
               )
           ;
             match readIntLessThan (you.Hand |> List.length) with
