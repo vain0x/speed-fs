@@ -48,7 +48,7 @@ module Game =
         | None -> NoUpdate
 
   let play ent1 ent2 =
-    let result = ref None
+    let result = ref (None: option<GameResult>)
 
     let initialGame agent =
       (ent1, ent2)
@@ -69,8 +69,8 @@ module Game =
           async {
             let! ev = inbox.Receive()
             match g |> doEvent agent ev with
-            | End (Win plId) ->
-                result := ((g |> Game.player plId).Name |> Some)
+            | End r ->
+                result := Some r
                 return ()
             | Update g ->
                 printfn "-------------------------------"
@@ -89,6 +89,7 @@ module Game =
       in
         MailboxProcessor.Start(agentBody)
     in
+      // TODO: よりよい方法で停止する
       async {
         do agent.Post(EvGameBegin)
         while (! result) |> Option.isNone do
