@@ -88,3 +88,8 @@ module Types =
       Name        : string
       Brain       : BrainSpec
     }
+
+  type Audience =
+    {
+      Listen      : Game -> Game -> Event -> unit
+    }

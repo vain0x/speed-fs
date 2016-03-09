@@ -16,23 +16,16 @@ module Game =
   let doEvent (agent: Post) ev g =
     match ev with
     | EvGameBegin ->
-        printfn "Game start!"
-
         g.PlayerStore
         |> Map.fold (fun g plId _ ->
             g |> Game.putFirstCard plId
             ) g
         |> Update
 
-    | EvGameEnd r ->
-        printfn "Game ended with %A." r
+    | EvGameEnd (Win plId as r) ->
         r |> End
 
     | EvPut (plId, card, dest) ->
-        printfn "Player %s puts card %A."
-          ((g |> Game.player plId).Name)
-          card
-
         match g |> Game.tryPutCardFromHand plId card dest with
         | Some g ->
             if (plId, g) ||> Game.hasNoCards
@@ -41,14 +34,13 @@ module Game =
         | None -> NoUpdate
 
     | EvReset ->
-        printfn "Reset."
-
         match g |> Game.resetBoardIfNecessary with
-        | Some g -> g |> Update
+        | Some g -> 
+            g |> Update
         | None -> NoUpdate
 
-  let play ent1 ent2 =
-    let result = ref None
+  let play audience ent1 ent2 =
+    let result = ref (None: option<GameResult>)
 
     let initialGame agent =
       (ent1, ent2)
@@ -69,18 +61,17 @@ module Game =
           async {
             let! ev = inbox.Receive()
             match g |> doEvent agent ev with
-            | End (Win plId) ->
-                result := ((g |> Game.player plId).Name |> Some)
+            | End r ->
+                result := Some r
                 return ()
-            | Update g ->
-                printfn "-------------------------------"
-                printfn "Board: %A" (g.Board |> Map.toList |> List.map snd)
-                for KeyValue (_, pl) in g.PlayerStore do
-                  printfn "Player %s's hand = %A"
-                    (pl.Name) (pl.Hand)
 
-                do! notifyUpdate ev g
-                return! msgLoop g
+            | Update g' ->
+                audience
+                |> List.iter (fun { Listen = listen } -> listen g g' ev)
+
+                do! notifyUpdate ev g'
+                return! msgLoop g'
+
             | NoUpdate ->
                 return! msgLoop g
           }
@@ -89,6 +80,7 @@ module Game =
       in
         MailboxProcessor.Start(agentBody)
     in
+      // TODO: よりよい方法で停止する
       async {
         do agent.Post(EvGameBegin)
         while (! result) |> Option.isNone do

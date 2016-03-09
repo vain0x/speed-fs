@@ -1,16 +1,16 @@
 ﻿namespace Speed
 
+open System
 open Speed
 open Speed.Core
 
 module Brain =
   let tryFindPuttableCard plId (g: GameState) =
     let pl = g.PlayerStore |> Map.find plId
-    let players = g.PlayerStore |> Map.toList |> List.map fst
     in
       pl.Hand
       |> List.tryPick (fun handCard ->
-          players
+          (g |> GameState.players)
           |> List.tryPick (fun dest ->
               let canPut =
                 match g.Board |> Map.tryFind dest with
@@ -23,7 +23,7 @@ module Brain =
               )
           )
 
-  let naiveBrain myId (agent: Post) =
+  let naiveBrain sleepTime myId (agent: Post) =
     let body (inbox: Brain) =
       let rec msgLoop () =
         async {
@@ -36,6 +36,8 @@ module Brain =
                     agent.Post(EvPut (myId, handCard, dest))
                 | None ->
                     agent.Post(EvReset)
+          ; if sleepTime > 0 then
+              do! Async.Sleep(sleepTime)
           ;
             return! msgLoop ()
         }

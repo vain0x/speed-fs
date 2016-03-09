@@ -74,6 +74,10 @@ module Player =
 
   let hand (pl: Player) =
     pl.Hand
+    
+module GameState =
+  let players (g: GameState) =
+    g.PlayerStore |> Map.toList |> List.map fst
 
 module Game =
   let init agent ent1 ent2 =
