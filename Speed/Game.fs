@@ -16,8 +16,6 @@ module Game =
   let doEvent (agent: Post) ev g =
     match ev with
     | EvGameBegin ->
-        printfn "Game start!"
-
         g.PlayerStore
         |> Map.fold (fun g plId _ ->
             g |> Game.putFirstCard plId
@@ -25,16 +23,11 @@ module Game =
         |> Update
 
     | EvGameEnd (Win plId as r) ->
-        printfn "Player %s won." ((g |> Game.player plId).Name)
         r |> End
 
     | EvPut (plId, card, dest) ->
         match g |> Game.tryPutCardFromHand plId card dest with
         | Some g ->
-            printfn "Player %s puts card %A."
-              ((g |> Game.player plId).Name)
-              card
-
             if (plId, g) ||> Game.hasNoCards
             then agent.Post(EvGameEnd (Win plId))
             g |> Update
@@ -43,11 +36,10 @@ module Game =
     | EvReset ->
         match g |> Game.resetBoardIfNecessary with
         | Some g -> 
-            printfn "Board reset."
             g |> Update
         | None -> NoUpdate
 
-  let play ent1 ent2 =
+  let play audience ent1 ent2 =
     let result = ref (None: option<GameResult>)
 
     let initialGame agent =
@@ -72,15 +64,14 @@ module Game =
             | End r ->
                 result := Some r
                 return ()
-            | Update g ->
-                printfn "-------------------------------"
-                printfn "Board: %A" (g.Board |> Map.toList |> List.map snd)
-                for KeyValue (_, pl) in g.PlayerStore do
-                  printfn "Player %s's hand = %A"
-                    (pl.Name) (pl.Hand)
 
-                do! notifyUpdate ev g
-                return! msgLoop g
+            | Update g' ->
+                audience
+                |> List.iter (fun { Listen = listen } -> listen g g' ev)
+
+                do! notifyUpdate ev g'
+                return! msgLoop g'
+
             | NoUpdate ->
                 return! msgLoop g
           }
