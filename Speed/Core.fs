@@ -73,9 +73,6 @@ module Player =
       Deck      = self.Deck |> List.map (fun _ -> ())
     }
 
-  let hand (pl: Player) =
-    pl.Hand
-    
 module GameState =
   let players (g: GameState) =
     g.PlayerStore |> Map.toList |> List.map fst
