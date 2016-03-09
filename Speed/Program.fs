@@ -9,7 +9,7 @@ module Helper =
   let makeEntrant name =
     {
       Name = name
-      Brain = Brain.naiveBrain
+      Brain = Brain.naiveBrain 100
     }
 
 [<EntryPoint>]

@@ -23,7 +23,7 @@ module Brain =
               )
           )
 
-  let naiveBrain myId (agent: Post) =
+  let naiveBrain sleepTime myId (agent: Post) =
     let body (inbox: Brain) =
       let rec msgLoop () =
         async {
@@ -36,6 +36,8 @@ module Brain =
                     agent.Post(EvPut (myId, handCard, dest))
                 | None ->
                     agent.Post(EvReset)
+          ; if sleepTime > 0 then
+              do! Async.Sleep(sleepTime)
           ;
             return! msgLoop ()
         }
