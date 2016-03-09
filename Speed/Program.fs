@@ -5,6 +5,50 @@ open Speed
 open Speed.Core
 open Speed.Brain
 
+module Brain =
+  let consoleBrain myId (agent: Post) =
+    let readIntLessThan ub =
+      let (|ToInt|_|) s =
+        match s |> Int32.TryParse with
+        | (true, n) -> Some n
+        | _ -> None
+      let rec loop () =
+        match Console.ReadLine() with
+        | null -> None
+        | ToInt n when n < ub -> Some n
+        | _ -> None
+      in
+        loop ()
+
+    let body (inbox: Brain) =
+      let rec msgLoop () =
+        async {
+          let! (ev, g) = inbox.Receive()
+          let you = g.PlayerStore |> Map.find myId
+          do
+            printfn "(Which card do you put and where?)"
+          ; you.Hand
+            |> List.iteri (fun i card ->
+                printfn "#%d %A" i card
+                )
+          ;
+            match readIntLessThan (you.Hand |> List.length) with
+            | None ->
+                agent.Post(EvReset)
+            | Some i ->
+                let card = you.Hand |> Seq.nth i
+                in
+                  // 場の全枠に置くことを試みる
+                  for dest in g |> GameState.players do
+                    agent.Post(EvPut (myId, card, dest))
+
+          return! msgLoop ()
+        }
+      in
+        msgLoop ()
+    in
+      MailboxProcessor.Start(body)
+
 module Audience =
   let consoleAudience =
     {
@@ -43,7 +87,7 @@ module Helper =
 [<EntryPoint>]
 let main argv =
 
-  let ent1 = makeEntrant "You" (consoleBrain)
+  let ent1 = makeEntrant "You" (Brain.consoleBrain)
   let ent2 = makeEntrant "CPU" (naiveBrain 5000)
   let audience =
     [Audience.consoleAudience]
