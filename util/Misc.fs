@@ -31,7 +31,7 @@ module Misc =
   let swap (x: byref<_>) (y: byref<_>) =
     let t = x
     do x <- y
-    do y <- x
+    do y <- t
 
   let makeCounter () =
     let r = ref 0
