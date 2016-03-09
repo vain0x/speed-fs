@@ -15,8 +15,8 @@ module Helper =
 [<EntryPoint>]
 let main argv =
 
-  let ent1 = makeEntrant "Player1"
-  let ent2 = makeEntrant "Player2"
+  let ent1 = makeEntrant "P1"
+  let ent2 = makeEntrant "P2"
   in
     Speed.Game.play ent1 ent2
     |> Async.RunSynchronously
