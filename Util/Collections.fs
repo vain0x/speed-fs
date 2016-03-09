@@ -1,6 +1,8 @@
 namespace Util.Collections
 
+open System
 open System.Collections.Generic
+open Util
 
 [<AutoOpen>]
 module Misc =
@@ -83,6 +85,20 @@ module Seq =
       let len = self |> Seq.length
       let n =  ((n + len) % len) % len
       Seq.append (self |> Seq.skip n) (self |> Seq.take n)
+
+  let shuffle self =
+    let rng = Random()
+    let len = self |> Seq.length
+    let arr = self |> Seq.toArray
+    let rec loop n =
+      if n = 0
+      then arr
+      else
+        let k = rng.Next(n + 1)
+        do  swap (& arr.[k]) (& arr.[n])
+        ;   loop (n - 1)
+    in
+      loop (len - 1)
 
 [<RequireQualifiedAccess>]
 module List =
