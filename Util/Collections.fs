@@ -107,6 +107,11 @@ module List =
   let maxWithIndex f =
     Seq.indexed >> List.ofSeq >> (List.maxBy f)
 
+  let tryUncons =
+    function
+    | [] -> None
+    | (x :: xs) -> Some (x, xs)
+
   let tryAssoc key self =
     let f l (k, v) =
         let r = Option.if' (k = key) (fun () -> v)
