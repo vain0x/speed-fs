@@ -33,6 +33,11 @@ module Misc =
     do x <- y
     do y <- x
 
+  let makeCounter () =
+    let r = ref 0
+    in
+      fun () -> (! r) |> tap (fun k -> r := k + 1)
+
 module Math =
   let numDigits n =
     if n = 0
