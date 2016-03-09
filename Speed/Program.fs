@@ -20,7 +20,7 @@ let main argv =
   in
     Speed.Game.play ent1 ent2
     |> Async.RunSynchronously
-    |> printfn "%s"
+    |> ignore
 
   // exit code
   0

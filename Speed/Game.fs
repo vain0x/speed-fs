@@ -24,27 +24,27 @@ module Game =
             ) g
         |> Update
 
-    | EvGameEnd r ->
-        printfn "Game ended with %A." r
+    | EvGameEnd (Win plId as r) ->
+        printfn "Player %s won." ((g |> Game.player plId).Name)
         r |> End
 
     | EvPut (plId, card, dest) ->
-        printfn "Player %s puts card %A."
-          ((g |> Game.player plId).Name)
-          card
-
         match g |> Game.tryPutCardFromHand plId card dest with
         | Some g ->
+            printfn "Player %s puts card %A."
+              ((g |> Game.player plId).Name)
+              card
+
             if (plId, g) ||> Game.hasNoCards
             then agent.Post(EvGameEnd (Win plId))
             g |> Update
         | None -> NoUpdate
 
     | EvReset ->
-        printfn "Reset."
-
         match g |> Game.resetBoardIfNecessary with
-        | Some g -> g |> Update
+        | Some g -> 
+            printfn "Board reset."
+            g |> Update
         | None -> NoUpdate
 
   let play ent1 ent2 =
