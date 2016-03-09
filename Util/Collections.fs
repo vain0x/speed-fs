@@ -128,6 +128,16 @@ module List =
           else xs |> loop (x :: acc)
     in loop []
 
+  let replaceOne s t =
+    let rec loop acc =
+      function
+      | [] -> []
+      | x :: xs ->
+          if x = s
+          then List.append (List.rev acc) (t :: xs)
+          else xs |> loop (x :: acc)
+    in loop []
+
 [<RequireQualifiedAccess>]
 module Array =
   // from collection object with .Count and .Item
