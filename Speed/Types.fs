@@ -47,35 +47,34 @@ module Types =
   type Post =
     MailboxProcessor<Event>
 
-  type Brain =
-    MailboxProcessor<Event * GameState>
-
-  and BrainSpec =
-    PlayerId -> Post -> Brain
-
-  and GameState =
+  type PlayerT<'Brain, 'CardBack> =
     {
-      PlayerStore : Map<PlayerId, PlayerState>
-      Board       : Board
+      PlayerId    : PlayerId
+      Name        : string
+      Brain       : 'Brain
+      Hand        : Hand
+      Deck        : list<'CardBack>
     }
 
   // プレイヤー本人または相手視点での自身の状態
-  and PlayerState =
+  type PlayerState = PlayerT<unit, unit>
+
+  type GameT<'Pl> =
     {
-      PlayerId    : PlayerId
-      Name        : string
-      Hand        : Hand
-      DeckCount   : int
+      PlayerStore : Map<PlayerId, 'Pl>
+      Board       : Board
     }
 
-  type Player =
-    {
-      PlayerId    : PlayerId
-      Name        : string
-      Brain       : Brain
-      Hand        : Hand
-      Deck        : list<Card>
-    }
+  type GameState =
+    GameT<PlayerState>
+
+  type Brain =
+    MailboxProcessor<Event * GameState>
+
+  type BrainSpec =
+    PlayerId -> Post -> Brain
+
+  type Player = PlayerT<Brain, Card>
 
   type Game =
     {

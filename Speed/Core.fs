@@ -68,8 +68,9 @@ module Player =
     {
       PlayerId  = self.PlayerId
       Name      = self.Name
+      Brain     = ()
       Hand      = self.Hand
-      DeckCount = self.Deck |> List.length
+      Deck      = self.Deck |> List.map (fun _ -> ())
     }
 
   let hand (pl: Player) =
