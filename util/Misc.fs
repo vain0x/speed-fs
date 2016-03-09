@@ -28,6 +28,11 @@ module Misc =
   let inline assert' pred =
     tap (fun x -> assert (pred x))
 
+  let swap (x: byref<_>) (y: byref<_>) =
+    let t = x
+    do x <- y
+    do y <- x
+
 module Math =
   let numDigits n =
     if n = 0
