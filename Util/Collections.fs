@@ -118,6 +118,16 @@ module List =
     |> List.tryFindIndex ((=) key)
     |> Option.map (fun i -> vals |> Seq.nth i)
 
+  let partitionOne v =
+    let rec loop acc =
+      function
+      | [] -> (None, [])
+      | x :: xs ->
+          if x = v
+          then (Some x, xs |> List.append (List.rev acc))
+          else xs |> loop (x :: acc)
+    in loop []
+
 [<RequireQualifiedAccess>]
 module Array =
   // from collection object with .Count and .Item
