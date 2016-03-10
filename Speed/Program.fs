@@ -9,25 +9,40 @@ module Console =
   let lock: (unit -> unit) -> unit =
     lock (new obj())
 
+  let readIntLessThanAsync ub =
+    let (|ToInt|_|) s =
+      match s |> Int32.TryParse with
+      | (true, n) -> Some n
+      | _ -> None
+    let rec loop () =
+      async {
+        let! line = Console.In.ReadLineAsync() |> Async.AwaitTask
+        return
+          match line with
+          | null -> None
+          | ToInt n when n < ub -> Some n
+          | _ -> None
+      }
+    in
+      loop ()
+
 module Brain =
   let consoleBrain myId (agent: Post) =
-    let readIntLessThan ub =
-      let (|ToInt|_|) s =
-        match s |> Int32.TryParse with
-        | (true, n) -> Some n
-        | _ -> None
-      let rec loop () =
-        match Console.ReadLine() with
-        | null -> None
-        | ToInt n when n < ub -> Some n
-        | _ -> None
-      in
-        loop ()
 
     let body (inbox: Brain) =
-      let rec msgLoop () =
+      // ゲームの更新通知を処理する
+      let rec tryUpdateState g =
         async {
-          let! (ev, g) = inbox.Receive()
+          let! opt = inbox.TryReceive(10)
+          match opt with
+          | None -> return g
+          | Some (ev, g) ->
+              // ev |> ignore
+              return! tryUpdateState g
+        }
+      // ユーザの入力を待つ
+      let procCommand (g: GameState) =
+        async {
           let you = g.PlayerStore |> Map.find myId
           do
             Console.lock (fun ()-> 
@@ -40,8 +55,10 @@ module Brain =
                     )
               do Console.ResetColor()
               )
+          let! input =
+            Console.readIntLessThanAsync (you.Hand |> List.length)
           let evs =
-            match readIntLessThan (you.Hand |> List.length) with
+            match input with
             | None ->
                 [EvReset]
             | Some i ->
@@ -53,10 +70,18 @@ module Brain =
                       ]
           do
             evs |> List.iter (fun ev -> agent.Post(ev, None))
-          return! msgLoop ()
+        }
+      let rec loop g =
+        async {
+          let! g = tryUpdateState g
+          let! () = procCommand g
+          return! loop g
         }
       in
-        msgLoop ()
+        async {
+          let! (_, g) = inbox.Receive()
+          return! loop g
+        }
     in
       MailboxProcessor.Start(body)
 
