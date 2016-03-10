@@ -39,7 +39,7 @@ module Brain =
                 | None ->
                     EvReset
               let _ =
-                agent.Post(myEv, None)
+                agent.Post(myEv)
               in
                 if sleepTime > 0 then
                   do! Async.Sleep(sleepTime)

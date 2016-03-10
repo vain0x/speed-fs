@@ -45,7 +45,7 @@ module Types =
     | EvGameEnd   of GameResult
 
   type Post =
-    MailboxProcessor<Event * option<AsyncReplyChannel<GameResult>>>
+    MailboxProcessor<Event>
 
   type PlayerT<'Brain, 'CardBack> =
     {

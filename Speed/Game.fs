@@ -29,7 +29,7 @@ module Game =
         match g |> Game.tryPutCardFromHand plId card dest with
         | Some g ->
             if (plId, g) ||> Game.hasNoCards
-            then agent.Post(EvGameEnd (Win plId), None)
+            then agent.Post(EvGameEnd (Win plId))
             g |> Update
         | None -> NoUpdate
 
@@ -40,12 +40,14 @@ module Game =
         | None -> NoUpdate
 
   let play audience ent1 ent2 =
+    let result = ref (None: option<GameResult>)
+
     let initialGame agent =
       (ent1, ent2)
       ||> Game.init agent
 
     let rec agent =
-      let agentBody (inbox: Post) =
+      let agentBody (inbox: MailboxProcessor<Event>) =
         let notifyUpdate ev g =
           g
           |> Game.players
@@ -61,14 +63,12 @@ module Game =
 
         let rec msgLoop (g: Game) =
           async {
-            let! (ev, replyChannelOpt) = inbox.Receive()
+            let! ev = inbox.Receive()
             match g |> doEvent agent ev with
             | End r ->
+                result := Some r
                 do notifyToAudience g g ev
                 do! notifyUpdate ev g
-                do
-                  replyChannelOpt
-                  |> Option.iter (fun ch -> ch.Reply(r))
                 return ()
 
             | Update g' ->
@@ -84,6 +84,10 @@ module Game =
       in
         MailboxProcessor.Start(agentBody)
     in
-      agent.PostAndAsyncReply(fun replyChannel ->
-        (EvGameBegin, Some replyChannel)
-        )
+      // TODO: よりよい方法で停止する
+      async {
+        do agent.Post(EvGameBegin)
+        while (! result) |> Option.isNone do
+          do! Async.Sleep(10)
+        return (! result) |> Option.get
+      }

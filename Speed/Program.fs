@@ -76,7 +76,7 @@ module Brain =
                       yield EvPut (myId, card, dest)
                       ]
           do
-            evs |> List.iter (fun ev -> agent.Post(ev, None))
+            evs |> List.iter (fun ev -> agent.Post(ev))
         }
       let rec loop g =
         async {
