@@ -165,12 +165,13 @@ module Game =
 
   let tryPutCardFromHand plId handCard dest (g: Game) =
     let pl = g |> player plId
-    let hand' =
+    let (handCard', hand') =
       pl.Hand
       |> List.partitionOne ((=) handCard)
-      |> snd
     in
-      if g |> canPutTo dest handCard then
+      if handCard' = Some handCard
+        && g |> canPutTo dest handCard
+      then
         g
         |> updatePlayer { pl with Hand = hand' }
         |> putCard dest handCard
