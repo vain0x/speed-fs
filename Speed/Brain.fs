@@ -28,18 +28,22 @@ module Brain =
       let rec msgLoop () =
         async {
           let! (ev, g') = inbox.Receive()
-          let myEv =
-            match g' |> tryFindPuttableCard myId with
-            | Some (handCard, dest) ->
-                EvPut (myId, handCard, dest)
-            | None ->
-                EvReset
-          let _ =
-            agent.Post(myEv, None)
-          in
-            if sleepTime > 0 then
-              do! Async.Sleep(sleepTime)
-          return! msgLoop ()
+          match ev with
+          | EvGameEnd _ ->
+              return ()
+          | _ ->
+              let myEv =
+                match g' |> tryFindPuttableCard myId with
+                | Some (handCard, dest) ->
+                    EvPut (myId, handCard, dest)
+                | None ->
+                    EvReset
+              let _ =
+                agent.Post(myEv, None)
+              in
+                if sleepTime > 0 then
+                  do! Async.Sleep(sleepTime)
+              return! msgLoop ()
         }
       in msgLoop ()
     in

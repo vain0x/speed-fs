@@ -65,6 +65,7 @@ module Game =
             match g |> doEvent agent ev with
             | End r ->
                 do notifyToAudience g g ev
+                do! notifyUpdate ev g
                 do
                   replyChannelOpt
                   |> Option.iter (fun ch -> ch.Reply(r))
