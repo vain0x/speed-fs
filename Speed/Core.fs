@@ -167,7 +167,7 @@ module Game =
     let pl = g |> player plId
     let hand' =
       pl.Hand
-      |> List.partitionOne handCard
+      |> List.partitionOne ((=) handCard)
       |> snd
     in
       if g |> canPutTo dest handCard then

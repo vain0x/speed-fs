@@ -55,7 +55,7 @@ module Brain =
               do
                 you.Hand
                 |> List.iteri (fun i card ->
-                    printfn "#%d %A" i card
+                    printfn "#%d %d" i (card |> Card.toInt)
                     )
               do Console.ResetColor()
               )
