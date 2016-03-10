@@ -5,6 +5,10 @@ open Speed
 open Speed.Core
 open Speed.Brain
 
+module Card =
+  let toInt =
+    Card.rank >> Rank.toInt
+
 module Console =
   let lock: (unit -> unit) -> unit =
     lock (new obj())
@@ -92,10 +96,11 @@ module Audience =
         fun g g' ev ->
           let body () =
             printfn "-------------------------------"
-            printfn "Board: %A" (g'.Board |> Map.toList |> List.map snd)
+            printfn "Board: %A"
+              (g'.Board |> Map.toList |> List.map (snd >> Card.toInt))
             for KeyValue (_, pl) in g'.PlayerStore do
               printfn "Player %s's hand = %A"
-                (pl.Name) (pl.Hand)
+                (pl.Name) (pl.Hand |> List.map Card.toInt)
 
               match ev with
               | EvGameBegin ->
@@ -105,9 +110,9 @@ module Audience =
                   printfn "Player %s won." ((g' |> Game.player plId).Name)
 
               | EvPut (plId, card, dest) ->
-                  printfn "Player %s puts card %A."
+                  printfn "Player %s puts card %d."
                     ((g' |> Game.player plId).Name)
-                    card
+                    (card |> Card.toInt)
 
               | EvReset ->
                   printfn "Board reset."
