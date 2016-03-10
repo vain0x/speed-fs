@@ -32,7 +32,7 @@ module Brain =
           do
             Console.lock (fun ()-> 
               do Console.ForegroundColor <- ConsoleColor.Green
-              do printfn "(Which card do you put and where?)"
+              do printfn "(Which card do you put?)"
               do
                 you.Hand
                 |> List.iteri (fun i card ->
