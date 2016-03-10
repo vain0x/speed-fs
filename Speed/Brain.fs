@@ -48,3 +48,8 @@ module Brain =
       in msgLoop ()
     in
       MailboxProcessor.Start(body)
+
+  type NaiveBrain (timeout) =
+    interface BrainSpec with
+      member this.Create(plId, post) =
+        naiveBrain timeout plId post

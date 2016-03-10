@@ -72,7 +72,7 @@ module Types =
     MailboxProcessor<Event * GameState>
 
   type BrainSpec =
-    PlayerId -> Post -> Brain
+    abstract member Create: PlayerId * Post -> Brain
 
   type Player = PlayerT<Brain, Card>
 
@@ -89,6 +89,4 @@ module Types =
     }
 
   type Audience =
-    {
-      Listen      : Game -> Game -> Event -> unit
-    }
+    abstract member Listen: Game * Game * Event -> unit

@@ -94,7 +94,7 @@ module Game =
         {
           PlayerId  = plId
           Name      = ent.Name
-          Brain     = ent.Brain plId agent
+          Brain     = ent.Brain.Create(plId, agent)
           Hand      = deck |> Seq.take 4 |> Seq.toList
           Deck      = deck |> Seq.skip 4 |> Seq.toList
         }
