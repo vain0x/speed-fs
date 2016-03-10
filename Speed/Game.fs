@@ -22,7 +22,7 @@ module Game =
             ) g
         |> Update
 
-    | EvGameEnd (Win plId as r) ->
+    | EvGameEnd r ->
         r |> End
 
     | EvPut (plId, card, dest) ->
@@ -57,18 +57,22 @@ module Game =
           |> Async.Parallel
           |> Async.Ignore
 
+        let notifyToAudience g g' ev =
+          audience
+          |> List.iter (fun { Listen = listen } -> listen g g' ev)
+
         let rec msgLoop (g: Game) =
           async {
             let! ev = inbox.Receive()
             match g |> doEvent agent ev with
             | End r ->
                 result := Some r
+                do notifyToAudience g g ev
+                do! notifyUpdate ev g
                 return ()
 
             | Update g' ->
-                audience
-                |> List.iter (fun { Listen = listen } -> listen g g' ev)
-
+                do notifyToAudience g g' ev
                 do! notifyUpdate ev g'
                 return! msgLoop g'
 

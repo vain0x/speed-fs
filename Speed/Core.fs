@@ -54,6 +54,9 @@ module Card =
           yield Card (suit, rank)
     ]
 
+  let suit (Card (s, _)) = s
+  let rank (Card (_, r)) = r
+
   let isNextTo (Card (_, r1)) (Card (_, r2)) =
     let d =
       ((((r1 |> Rank.toInt) - ((r2 |> Rank.toInt))) + 13) % 13)
@@ -68,13 +71,11 @@ module Player =
     {
       PlayerId  = self.PlayerId
       Name      = self.Name
+      Brain     = ()
       Hand      = self.Hand
-      DeckCount = self.Deck |> List.length
+      Deck      = self.Deck |> List.map (fun _ -> ())
     }
 
-  let hand (pl: Player) =
-    pl.Hand
-    
 module GameState =
   let players (g: GameState) =
     g.PlayerStore |> Map.toList |> List.map fst
@@ -164,12 +165,13 @@ module Game =
 
   let tryPutCardFromHand plId handCard dest (g: Game) =
     let pl = g |> player plId
-    let hand' =
+    let (handCard', hand') =
       pl.Hand
-      |> List.partitionOne handCard
-      |> snd
+      |> List.partitionOne ((=) handCard)
     in
-      if g |> canPutTo dest handCard then
+      if handCard' = Some handCard
+        && g |> canPutTo dest handCard
+      then
         g
         |> updatePlayer { pl with Hand = hand' }
         |> putCard dest handCard

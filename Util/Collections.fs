@@ -123,12 +123,12 @@ module List =
     |> List.tryFindIndex ((=) key)
     |> Option.map (fun i -> vals |> Seq.nth i)
 
-  let partitionOne v =
+  let partitionOne pred =
     let rec loop acc =
       function
-      | [] -> (None, [])
+      | [] -> (None, acc |> List.rev)
       | x :: xs ->
-          if x = v
+          if pred x
           then (Some x, xs |> List.append (List.rev acc))
           else xs |> loop (x :: acc)
     in loop []
