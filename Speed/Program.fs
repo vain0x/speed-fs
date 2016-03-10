@@ -35,17 +35,20 @@ module Brain =
 
     let body (inbox: Brain) =
       // ゲームの更新通知を処理する
-      let rec tryUpdateState g =
+      let rec tryUpdateState waitsAtLeastOne g =
         async {
-          let! opt = inbox.TryReceive(100)
+          let! opt = inbox.TryReceive(10)
           match opt with
-          | None -> return Some g
+          | None ->
+              if waitsAtLeastOne
+              then return! tryUpdateState true g
+              else return Some g
           | Some (ev, g) ->
               match ev with
               | EvGameEnd _ ->
                   return None
               | _ ->
-                  return! tryUpdateState g
+                  return! tryUpdateState false g
         }
       // ユーザの入力を待つ
       let procCommand (g: GameState) =
@@ -80,7 +83,7 @@ module Brain =
         }
       let rec loop g =
         async {
-          let! opt = tryUpdateState g
+          let! opt = tryUpdateState true g
           match opt with
           | None -> return ()
           | Some g ->
