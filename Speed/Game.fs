@@ -22,7 +22,7 @@ module Game =
             ) g
         |> Update
 
-    | EvGameEnd (Win plId as r) ->
+    | EvGameEnd r ->
         r |> End
 
     | EvPut (plId, card, dest) ->
