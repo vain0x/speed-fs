@@ -34,8 +34,10 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 262);
+            this.Font = new System.Drawing.Font("ＭＳ ゴシック", 9F);
             this.Name = "MainForm";
-            this.Text = "MainForm";
+            this.Text = "Speed F#";
+            this.Paint += new System.Windows.Forms.PaintEventHandler(this.MainForm_Paint);
             this.ResumeLayout(false);
 
         }
