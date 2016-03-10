@@ -43,17 +43,19 @@ module Brain =
               ;
                 Console.ResetColor()
               )
-          ;
+          let evs =
             match readIntLessThan (you.Hand |> List.length) with
             | None ->
-                agent.Post(EvReset)
+                [EvReset]
             | Some i ->
                 let card = you.Hand |> Seq.nth i
                 in
                   // 場の全枠に置くことを試みる
-                  for dest in g |> GameState.players do
-                    agent.Post(EvPut (myId, card, dest))
-
+                  [ for dest in g |> GameState.players do
+                      yield EvPut (myId, card, dest)
+                      ]
+          do
+            evs |> List.iter (fun ev -> agent.Post(ev, None))
           return! msgLoop ()
         }
       in

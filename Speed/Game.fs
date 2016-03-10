@@ -29,7 +29,7 @@ module Game =
         match g |> Game.tryPutCardFromHand plId card dest with
         | Some g ->
             if (plId, g) ||> Game.hasNoCards
-            then agent.Post(EvGameEnd (Win plId))
+            then agent.Post(EvGameEnd (Win plId), None)
             g |> Update
         | None -> NoUpdate
 
@@ -40,14 +40,12 @@ module Game =
         | None -> NoUpdate
 
   let play audience ent1 ent2 =
-    let result = ref (None: option<GameResult>)
-
     let initialGame agent =
       (ent1, ent2)
       ||> Game.init agent
 
     let rec agent =
-      let agentBody (inbox: MailboxProcessor<Event>) =
+      let agentBody (inbox: Post) =
         let notifyUpdate ev g =
           g
           |> Game.players
@@ -57,18 +55,23 @@ module Game =
           |> Async.Parallel
           |> Async.Ignore
 
+        let notifyToAudience g g' ev =
+          audience
+          |> List.iter (fun { Listen = listen } -> listen g g' ev)
+
         let rec msgLoop (g: Game) =
           async {
-            let! ev = inbox.Receive()
+            let! (ev, replyChannelOpt) = inbox.Receive()
             match g |> doEvent agent ev with
             | End r ->
-                result := Some r
+                do notifyToAudience g g ev
+                do
+                  replyChannelOpt
+                  |> Option.iter(fun ch -> ch.Reply(r))
                 return ()
 
             | Update g' ->
-                audience
-                |> List.iter (fun { Listen = listen } -> listen g g' ev)
-
+                do notifyToAudience g g' ev
                 do! notifyUpdate ev g'
                 return! msgLoop g'
 
@@ -80,10 +83,6 @@ module Game =
       in
         MailboxProcessor.Start(agentBody)
     in
-      // TODO: よりよい方法で停止する
-      async {
-        do agent.Post(EvGameBegin)
-        while (! result) |> Option.isNone do
-          do! Async.Sleep(10)
-        return (! result) |> Option.get
-      }
+      agent.PostAndAsyncReply(fun replyChannel ->
+        (EvGameBegin, Some replyChannel)
+        )
