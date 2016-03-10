@@ -47,7 +47,7 @@ module Game =
       ||> Game.init agent
 
     let rec agent =
-      let agentBody (inbox: MailboxProcessor<Event>) =
+      let agentBody (inbox: Post) =
         let notifyUpdate ev g =
           g
           |> Game.players
