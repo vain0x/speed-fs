@@ -31,17 +31,14 @@ module Brain =
           let you = g.PlayerStore |> Map.find myId
           do
             Console.lock (fun ()-> 
+              do Console.ForegroundColor <- ConsoleColor.Green
+              do printfn "(Which card do you put and where?)"
               do
-                Console.ForegroundColor <- ConsoleColor.Green
-              ;
-                printfn "(Which card do you put and where?)"
-              ;
                 you.Hand
                 |> List.iteri (fun i card ->
                     printfn "#%d %A" i card
                     )
-              ;
-                Console.ResetColor()
+              do Console.ResetColor()
               )
           let evs =
             match readIntLessThan (you.Hand |> List.length) with
