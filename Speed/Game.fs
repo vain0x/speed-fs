@@ -67,7 +67,7 @@ module Game =
                 do notifyToAudience g g ev
                 do
                   replyChannelOpt
-                  |> Option.iter(fun ch -> ch.Reply(r))
+                  |> Option.iter (fun ch -> ch.Reply(r))
                 return ()
 
             | Update g' ->
