@@ -98,11 +98,15 @@ module Brain =
     in
       MailboxProcessor.Start(body)
 
+  type ConsoleBrain () =
+    interface BrainSpec with
+      member this.Create(plId, post) =
+        consoleBrain plId post
+
 module Audience =
   let consoleAudience =
-    {
-      Listen =
-        fun g g' ev ->
+    { new Audience with
+        member this.Listen(g, g', ev) =
           let body () =
             printfn "-------------------------------"
             printfn "Board: %A"
@@ -140,8 +144,8 @@ module Helper =
 [<EntryPoint>]
 let main argv =
 
-  let ent1 = makeEntrant "You" (Brain.consoleBrain)
-  let ent2 = makeEntrant "CPU" (naiveBrain 5000)
+  let ent1 = makeEntrant "You" (Brain.ConsoleBrain())
+  let ent2 = makeEntrant "CPU" (NaiveBrain(5000))
   let audience =
     [Audience.consoleAudience]
   in
