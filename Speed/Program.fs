@@ -55,7 +55,7 @@ module Brain =
                       yield EvPut (myId, card, dest)
                       ]
           do
-            evs |> List.iter (fun ev -> agent.Post(ev))
+            evs |> List.iter (fun ev -> agent.Post(ev, None))
           return! msgLoop ()
         }
       in
