@@ -126,7 +126,7 @@ module List =
   let partitionOne v =
     let rec loop acc =
       function
-      | [] -> (None, [])
+      | [] -> (None, acc |> List.rev)
       | x :: xs ->
           if x = v
           then (Some x, xs |> List.append (List.rev acc))
