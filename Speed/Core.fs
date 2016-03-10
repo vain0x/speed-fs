@@ -54,6 +54,9 @@ module Card =
           yield Card (suit, rank)
     ]
 
+  let suit (Card (s, _)) = s
+  let rank (Card (_, r)) = r
+
   let isNextTo (Card (_, r1)) (Card (_, r2)) =
     let d =
       ((((r1 |> Rank.toInt) - ((r2 |> Rank.toInt))) + 13) % 13)
