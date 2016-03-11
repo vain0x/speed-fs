@@ -77,10 +77,6 @@ module Player =
       Deck      = self.Deck |> List.map (fun _ -> ())
     }
 
-module GameState =
-  let players (g: GameState) =
-    g.PlayerStore |> Map.toList |> List.map fst
-
 module Game =
   let init agent ent1 ent2 =
     let (deck1, deck2) =
@@ -119,13 +115,13 @@ module Game =
       Board       = g.Board
     }
 
-  let players (g: Game) =
+  let players (g: GameT<_>) =
     g.PlayerStore |> Map.toList |> List.map fst
 
-  let player plId (g: Game) =
+  let player plId (g: GameT<_>) =
     g.PlayerStore |> Map.find plId
 
-  let canPutTo dest card (g: Game) =
+  let canPutTo dest card (g: GameT<_>) =
     match g.Board |> Map.tryFind dest with
     | None -> true
     | Some boardCard ->

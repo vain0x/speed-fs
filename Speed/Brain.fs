@@ -10,7 +10,7 @@ module Brain =
     in
       pl.Hand
       |> List.tryPick (fun handCard ->
-          (g |> GameState.players)
+          (g |> Game.players)
           |> List.tryPick (fun dest ->
               let canPut =
                 match g.Board |> Map.tryFind dest with

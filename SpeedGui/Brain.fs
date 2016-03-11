@@ -30,7 +30,7 @@ module Brain =
         |> List.iter
             (function
               | GOCard (card, _) ->
-                  for dest in g |> GameState.players do
+                  for dest in g |> Game.players do
                     post.Post(EvPut(myId, card, dest))
               | _ -> 
                   post.Post(EvReset)

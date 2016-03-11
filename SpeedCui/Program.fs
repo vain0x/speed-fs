@@ -75,7 +75,7 @@ module Brain =
                 let card = you.Hand |> Seq.nth i
                 in
                   // 場の全枠に置くことを試みる
-                  [ for dest in g |> GameState.players do
+                  [ for dest in g |> Game.players do
                       yield EvPut (myId, card, dest)
                       ]
           do

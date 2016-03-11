@@ -48,7 +48,7 @@ module Game =
 
     let rec agent =
       let agentBody (inbox: Post) =
-        let notifyUpdate ev g =
+        let notifyUpdate ev (g: Game) =
           g
           |> Game.players
           |> Seq.map (fun plId -> async {
