@@ -127,57 +127,6 @@ module Game =
     | Some boardCard ->
         card |> Card.isNextTo boardCard
 
-  let updatePlayer (pl: Player) (g: Game) =
-    { g with PlayerStore = g.PlayerStore |> Map.add (pl.PlayerId) pl }
-
-  let tryDraw plId (g: Game) =
-    let pl = g |> player plId
-    in
-      pl.Deck
-      |> List.tryUncons
-      |> Option.map (fun (card, deck) ->
-          let g = g |> updatePlayer { pl with Deck = deck }
-          in (g, card)
-          )
-
-  let drawToHand plId (g: Game) =
-    g
-    |> tryDraw plId
-    |> Option.map (fun (g, card) ->
-        let pl = g |> player plId
-        let pl = { pl with Hand = card :: pl.Hand }
-        g |> updatePlayer pl
-        )
-    |> Option.getOr g
-
-  let putCard plId card (g: Game) =
-    { g with Board = g.Board |> Map.add plId card }
-
-  let putFirstCard plId g =
-    g
-    |> tryDraw plId
-    |> Option.get  // assert: ゲームの開始直後なのでデッキは満タン
-    |> (fun (g, card) ->
-        g |> putCard plId card
-        )
-
-  let tryPutCardFromHand plId handCard dest (g: Game) =
-    let pl = g |> player plId
-    let (handCard', hand') =
-      pl.Hand
-      |> List.partitionOne ((=) handCard)
-    in
-      if handCard' = Some handCard
-        && g |> canPutTo dest handCard
-      then
-        g
-        |> updatePlayer { pl with Hand = hand' }
-        |> putCard dest handCard
-        |> drawToHand plId
-        |> Some
-      else
-        None
-
   let puttableCards plId (g: Game) =
     let pl = g |> player plId
     in
@@ -195,14 +144,108 @@ module Game =
       ]
     |> List.forall id
 
-  let resetBoardIfNecessary (g: Game) =
-    if g |> stuck then
-      { g with Board = Map.empty } |> Some
-    else
-      None
-
   let hasNoCards plId (g: Game) =
     let pl = g |> player plId
     in
       pl.Hand |> List.isEmpty
       && pl.Deck |> List.isEmpty
+      
+  type GameUpdate =
+    | Update          of list<GameUpdate>
+    | UpdatePlayer    of Player
+    | UpdateDraw      of PlayerId
+    | UpdatePutCard   of PlayerId * Card * dest: PlayerId
+    | UpdateReset
+  with
+    static member Unit = Update []
+
+    static member Combine(l, r) =
+      match (l, r) with
+      | (Update l, Update r) -> Update (List.append l r)
+      | (Update l, r) -> Update (l @ [r])
+      | (l, Update r) -> Update (l :: r)
+      | (l, r) -> Update [l; r]
+
+    static member Apply(g, u) =
+      let rec f g =
+        function
+        | Update us ->
+            us |> List.fold f g
+
+        | UpdatePlayer pl ->
+            let store' = g.PlayerStore |> Map.add (pl.PlayerId) pl
+            in { g with PlayerStore = store' }
+
+        | UpdateDraw plId ->
+            let pl = g |> player plId
+            in
+              match pl.Deck |> List.tryUncons with
+              | None -> g
+              | Some (card, deck) ->
+                  let pl' =
+                    { pl with
+                        Deck = deck
+                        Hand = card :: pl.Hand
+                      }
+                  in
+                    f g (UpdatePlayer pl')
+
+        | UpdatePutCard (plId, handCard, dest) ->
+            let pl = g |> player plId
+            let (handCard', hand') =
+              pl.Hand
+              |> List.partitionOne ((=) handCard)
+            in
+              if handCard' = Some handCard
+                && g |> canPutTo dest handCard
+              then
+                let g =
+                  f g (UpdatePlayer { pl with Hand = hand' })
+                let g =
+                  { g with Board = g.Board |> Map.add plId handCard }
+                in
+                  f g (UpdateDraw plId)
+              else
+                g
+
+        | UpdateReset ->
+            if g |> stuck
+            then { g with Board = Map.empty }
+            else g
+      in
+        f g u
+
+  let up = UpdateMonad.up
+  let get = UM (fun g -> (Update [], g))
+
+  let getPlayers =
+    update {
+      let! g = get
+      return g |> players
+    }
+
+  let getPlayer plId =
+    update {
+      let! g = get
+      return g |> player plId
+    }
+
+  let tryDraw plId =
+    update {
+      let! pl = getPlayer plId
+      match pl.Deck |> List.tryUncons with
+      | None ->
+          return None
+      | Some (card, deck) ->
+          do! up (UpdatePlayer { pl with Deck = deck })
+          return Some card
+    }
+
+  let putFirstCard plId =
+    update {
+      let! cardOpt = tryDraw plId
+      match cardOpt with
+      | None -> assert false  // assert: ゲームの開始直後なのでデッキは満タン
+      | Some card ->
+          return! up (UpdatePutCard (plId, card, plId))
+    }
