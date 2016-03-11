@@ -86,8 +86,7 @@ module Seq =
       let n =  ((n + len) % len) % len
       Seq.append (self |> Seq.skip n) (self |> Seq.take n)
 
-  let shuffle self =
-    let rng = Random()
+  let shuffle (rng: Random) self =
     let len = self |> Seq.length
     let arr = self |> Seq.toArray
     let rec loop n =
