@@ -37,6 +37,7 @@
             this.Font = new System.Drawing.Font("ＭＳ ゴシック", 9F);
             this.Name = "MainForm";
             this.Text = "Speed F#";
+            this.Click += new System.EventHandler(this.MainForm_Click);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.MainForm_Paint);
             this.ResumeLayout(false);
 

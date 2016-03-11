@@ -7,6 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.FSharp;
+using Microsoft.FSharp.Core;
+
+using Speed;
+using Spc = Speed.Core;
+using Spct = Speed.Core.Types;
 
 namespace SpeedGui
 {
@@ -17,16 +23,18 @@ namespace SpeedGui
             InitializeComponent();
         }
 
-        private void DrawTitle(Graphics g)
+        Spct.GameT<Spct.PlayerT<Unit, Unit>> gs_;
+
+        private void DrawTitle(Graphics gx)
         {
-            g.DrawString
+            gx.DrawString
                 ("Speed F#"
                 , new Font("Yu Gothic", 35)
                 , new SolidBrush(Color.Black)
                 , new PointF(30, 50)
                 );
 
-            g.DrawString
+            gx.DrawString
                 ("Click to Start!"
                 , new Font("Yu Gothic", 16)
                 , new SolidBrush(Color.Black)
@@ -34,9 +42,23 @@ namespace SpeedGui
                 );
         }
 
+        private void DrawBoard(Graphics gx)
+        {
+        }
+
+        private void StartGame()
+        {
+            // unimplemented
+        }
+
         private void MainForm_Paint(object sender, PaintEventArgs e)
         {
             DrawTitle(e.Graphics);
+        }
+
+        private void MainForm_Click(object sender, EventArgs e)
+        {
+            StartGame();
         }
     }
 }

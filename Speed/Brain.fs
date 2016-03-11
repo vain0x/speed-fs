@@ -53,3 +53,24 @@ module Brain =
     interface BrainSpec with
       member this.Create(plId, post) =
         naiveBrain timeout plId post
+
+  let guiBrain plId post =
+    let body (inbox: Brain) =
+      let rec msgLoop () =
+        async {
+          let! (ev, g') = inbox.Receive()
+          match ev with
+          | EvGameEnd _ ->
+              return ()
+          | _ ->
+          return! msgLoop ()
+        }
+      in
+        msgLoop ()
+    in
+      MailboxProcessor.Start(body)
+
+  type GuiBrain () =
+    interface BrainSpec with
+      member this.Create(plId, post) =
+        guiBrain plId post
