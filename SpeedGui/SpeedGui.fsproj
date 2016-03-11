@@ -5,14 +5,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>24ac5af1-d512-4c1d-a87d-98df269c7523</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>AdhocFs</RootNamespace>
-    <AssemblyName>Speed</AssemblyName>
+    <ProjectGuid>e0ec71b0-0322-427b-bc43-82695bf4774d</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>SpeedGui</RootNamespace>
+    <AssemblyName>SpeedGui</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>Speed</Name>
+    <Name>SpeedGui</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,7 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>bin\Debug\AdhocFs.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\SpeedGui.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -34,7 +34,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>bin\Release\AdhocFs.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\SpeedGui.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
@@ -47,18 +47,25 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Util.fs" />
     <Compile Include="Types.fs" />
-    <Compile Include="Core.fs" />
-    <Compile Include="Game.fs" />
+    <Compile Include="Func.fs" />
     <Compile Include="Brain.fs" />
+    <Compile Include="MainForm.fs" />
+    <Compile Include="Program.fs" />
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Speed\Speed.fsproj">
+      <Name>Speed</Name>
+      <Project>{24ac5af1-d512-4c1d-a87d-98df269c7523}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Util\Util.fsproj">
       <Name>Util</Name>
       <Project>{5316dca5-2710-4086-a243-7eb5cc2f74c2}</Project>

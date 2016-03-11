@@ -35,17 +35,20 @@ module Brain =
 
     let body (inbox: Brain) =
       // ゲームの更新通知を処理する
-      let rec tryUpdateState g =
+      let rec tryUpdateState waitsAtLeastOne g =
         async {
-          let! opt = inbox.TryReceive(100)
+          let! opt = inbox.TryReceive(10)
           match opt with
-          | None -> return Some g
+          | None ->
+              if waitsAtLeastOne
+              then return! tryUpdateState true g
+              else return Some g
           | Some (ev, g) ->
               match ev with
               | EvGameEnd _ ->
                   return None
               | _ ->
-                  return! tryUpdateState g
+                  return! tryUpdateState false g
         }
       // ユーザの入力を待つ
       let procCommand (g: GameState) =
@@ -80,7 +83,7 @@ module Brain =
         }
       let rec loop g =
         async {
-          let! opt = tryUpdateState g
+          let! opt = tryUpdateState true g
           match opt with
           | None -> return ()
           | Some g ->
@@ -95,11 +98,15 @@ module Brain =
     in
       MailboxProcessor.Start(body)
 
+  type ConsoleBrain () =
+    interface BrainSpec with
+      member this.Create(plId, post) =
+        consoleBrain plId post
+
 module Audience =
   let consoleAudience =
-    {
-      Listen =
-        fun g g' ev ->
+    { new Audience with
+        member this.Listen(g, g', ev) =
           let body () =
             printfn "-------------------------------"
             printfn "Board: %A"
@@ -137,8 +144,8 @@ module Helper =
 [<EntryPoint>]
 let main argv =
 
-  let ent1 = makeEntrant "You" (Brain.consoleBrain)
-  let ent2 = makeEntrant "CPU" (naiveBrain 5000)
+  let ent1 = makeEntrant "You" (Brain.ConsoleBrain())
+  let ent2 = makeEntrant "CPU" (NaiveBrain(5000))
   let audience =
     [Audience.consoleAudience]
   in

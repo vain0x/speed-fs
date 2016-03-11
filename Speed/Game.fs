@@ -47,7 +47,7 @@ module Game =
       ||> Game.init agent
 
     let rec agent =
-      let agentBody (inbox: MailboxProcessor<Event>) =
+      let agentBody (inbox: Post) =
         let notifyUpdate ev g =
           g
           |> Game.players
@@ -59,7 +59,7 @@ module Game =
 
         let notifyToAudience g g' ev =
           audience
-          |> List.iter (fun { Listen = listen } -> listen g g' ev)
+          |> List.iter (fun (au: Audience) -> au.Listen(g, g', ev))
 
         let rec msgLoop (g: Game) =
           async {
