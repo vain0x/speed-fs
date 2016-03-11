@@ -5,22 +5,10 @@ open System.Drawing
 open System.Windows.Forms
 open Speed
 open Speed.Core
+open Util
+open Util.Collections
 
-[<AutoOpen>]
-module Misc =
-  let yuGothic emSizeInt =
-    new Font("Yu Gothic", emSizeInt |> float32)
-  let pointF x y =
-    new PointF(float32 x, float32 y)
-  let blackBrush =
-    new SolidBrush(System.Drawing.Color.Black)
-
-  type MainFormState =
-    | BeforeGame
-    | InGame      of GameState
-    | AfterGame   of GameResult
-
-type MainForm () =
+type MainForm () as thisForm =
   inherit Form
     ( Text = "Speed F#"
     )
@@ -28,25 +16,71 @@ type MainForm () =
   /// Some g iff game is running
   let mutable cur = BeforeGame
 
-  let drawTitleScreen (gfx: Graphics) =
-    do
-      gfx.DrawString
-        ("Speed F#"
-        , yuGothic 35
-        , blackBrush
-        , pointF 30 50
-        )
-    do
-      gfx.DrawString
-        ("Click to Start!"
-        , yuGothic 16
-        , blackBrush
-        , pointF 70 150
+  let updateTimer =
+    new Timer()
+    |> tap (fun timer ->
+        do timer.Interval <- 17
+        do timer.Tick.Add(fun e -> thisForm.Refresh())
         )
 
-  override this.OnPaint(e) =
+  let onClickEvent = new Event<Point * GameState>()
+
+  let onUpdate g =
+    do cur <- InGame g
+
+  let onEnd (g: GameState, Win plId) =
+    let wins =
+      (g.PlayerStore |> Map.find plId).Name = "You"
+    do cur <- AfterGame wins
+
+  let beginGame () =
+    assert (cur = BeforeGame)
+    let ent1 =
+      {
+        Name    = "You"
+        Brain   =
+          Brain.GuiBrain(onUpdate, onEnd, onClickEvent.Publish)
+      }
+    let ent2 =
+      {
+        Name    = "CPU"
+        Brain   = Brain.NaiveBrain(1000)
+      }
+    in
+      Game.play [] ent1 ent2
+      |> Async.Ignore
+      |> Async.Start
+    do updateTimer.Start()
+
+  do
+    thisForm.DoubleBuffered <- true
+
+  override this.OnPaint(e: PaintEventArgs) =
     match cur with
     | BeforeGame ->
-        drawTitleScreen(e.Graphics)
-    | _ ->
-        ()
+        drawTitleScreen (e.Graphics)
+    | AfterGame r ->
+        drawResultScreen r (e.Graphics)
+    | InGame g ->
+        let buffer =
+          new Bitmap
+            ( width  = e.ClipRectangle.Width
+            , height = e.ClipRectangle.Height
+            )
+        let gfx = Graphics.FromImage(buffer)
+        do drawGameScreen g gfx
+        do
+          e.Graphics.DrawImageUnscaled
+            (buffer
+            , 0, 0
+            , e.ClipRectangle.Width
+            , e.ClipRectangle.Height
+            )
+
+  override this.OnMouseClick(e: MouseEventArgs) =
+    match cur with
+    | BeforeGame
+    | AfterGame _ ->
+        do beginGame ()
+    | InGame g ->
+        do onClickEvent.Trigger(e.Location, g)

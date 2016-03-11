@@ -52,6 +52,10 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Util.fs" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Func.fs" />
+    <Compile Include="Brain.fs" />
     <Compile Include="MainForm.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
