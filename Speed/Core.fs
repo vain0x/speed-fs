@@ -1,5 +1,6 @@
 ﻿namespace Speed.Core
 
+open System
 open Basis.Core
 open Util
 open Util.Collections
@@ -88,7 +89,8 @@ module Game =
           (suit |> Suit.color) = Black
           )
     let initPlayer deck (ent: Entrant) =
-      let deck = deck |> Seq.shuffle
+      let rng = Random()
+      let deck = deck |> Seq.shuffle rng
       let plId = Player.newId ()
       in
         {
