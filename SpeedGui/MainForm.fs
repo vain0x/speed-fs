@@ -3,6 +3,8 @@
 open System
 open System.Drawing
 open System.Windows.Forms
+open Speed
+open Speed.Core
 
 [<AutoOpen>]
 module Misc =
@@ -13,10 +15,18 @@ module Misc =
   let blackBrush =
     new SolidBrush(System.Drawing.Color.Black)
 
+  type MainFormState =
+    | BeforeGame
+    | InGame      of GameState
+    | AfterGame   of GameResult
+
 type MainForm () =
   inherit Form
     ( Text = "Speed F#"
     )
+
+  /// Some g iff game is running
+  let mutable cur = BeforeGame
 
   let drawTitleScreen (gfx: Graphics) =
     do
@@ -35,4 +45,8 @@ type MainForm () =
         )
 
   override this.OnPaint(e) =
-    drawTitleScreen(e.Graphics)
+    match cur with
+    | BeforeGame ->
+        drawTitleScreen(e.Graphics)
+    | _ ->
+        ()
