@@ -76,11 +76,7 @@ module Types =
 
   type Player = PlayerT<Brain, Card>
 
-  type Game =
-    {
-      PlayerStore : Map<PlayerId, Player>
-      Board       : Board
-    }
+  type Game = GameT<Player>
 
   type Entrant =
     {
