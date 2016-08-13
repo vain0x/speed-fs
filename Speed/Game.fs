@@ -10,34 +10,29 @@ open Util.Collections
 module Game =
   type EventResult =
     | End         of GameResult
-    | Update      of Game
-    | NoUpdate
+    | Kont
 
-  let doEvent (agent: Post) ev g =
-    match ev with
-    | EvGameBegin ->
-        g.PlayerStore
-        |> Map.fold (fun g plId _ ->
-            g |> Game.putFirstCard plId
-            ) g
-        |> Update
-
-    | EvGameEnd r ->
-        r |> End
-
-    | EvPut (plId, card, dest) ->
-        match g |> Game.tryPutCardFromHand plId card dest with
-        | Some g ->
+  let doEvent (agent: Post) ev =
+    update {
+      match ev with
+      | EvGameBegin ->
+          let! plIds = Game.getPlayers
+          for plId in plIds do
+            do! Game.putFirstCard plId
+          return Kont
+      | EvGameEnd r ->
+          return End r
+      | EvPut (plId, card, dest) ->
+          do! Game.up (Game.UpdatePutCard (plId, card, dest))
+          let! g = Game.get
+          in
             if (plId, g) ||> Game.hasNoCards
             then agent.Post(EvGameEnd (Win plId))
-            g |> Update
-        | None -> NoUpdate
-
-    | EvReset ->
-        match g |> Game.resetBoardIfNecessary with
-        | Some g -> 
-            g |> Update
-        | None -> NoUpdate
+          return Kont
+      | EvReset ->
+          do! Game.up (Game.UpdateReset)
+          return Kont
+    }
 
   let play audience ent1 ent2 =
     let result = ref (None: option<GameResult>)
@@ -56,6 +51,7 @@ module Game =
               })
           |> Async.Parallel
           |> Async.Ignore
+          |> Async.Start
 
         let notifyToAudience g g' ev =
           audience
@@ -64,20 +60,28 @@ module Game =
         let rec msgLoop (g: Game) =
           async {
             let! ev = inbox.Receive()
-            match g |> doEvent agent ev with
-            | End r ->
-                result := Some r
-                do notifyToAudience g g ev
-                do! notifyUpdate ev g
-                return ()
-
-            | Update g' ->
-                do notifyToAudience g g' ev
-                do! notifyUpdate ev g'
-                return! msgLoop g'
-
-            | NoUpdate ->
-                return! msgLoop g
+            let u =
+              update {
+                let! evResult = doEvent agent ev
+                in
+                  match evResult with
+                  | End r ->
+                      do result := Some r
+                      do notifyToAudience g g ev
+                      do notifyUpdate ev g
+                      return g
+                  | Kont ->
+                    let! g' = Game.get
+                    in
+                      if g = g'
+                      then return g
+                      else
+                        do notifyToAudience g g' ev
+                        do notifyUpdate ev g'
+                        return g'
+              }
+            let g' = u |> UpdateMonad.run g
+            return! msgLoop g'
           }
         in
           msgLoop (initialGame agent)
