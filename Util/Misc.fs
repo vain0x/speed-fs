@@ -167,6 +167,9 @@ module UpdateMonad =
         else this.Zero()
       in loop ()
 
+  let run g (UM f) = f g |> snd
+  let up u = UM (fun _ -> (u, ()))
+
 [<AutoOpen>]
 module UpdateMonadSyntax =
   let update = UpdateMonad.UpdateBuilder()
